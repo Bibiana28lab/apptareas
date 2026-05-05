@@ -58,14 +58,13 @@ button {
   margin-bottom: 22px;
 }
 
-.brand-mark {
-  display: grid;
-  place-items: center;
-  width: 46px;
-  height: 46px;
+.brand-logo {
+  width: 64px;
+  height: 64px;
   border-radius: 8px;
-  background: var(--accent);
-  font-weight: 800;
+  object-fit: contain;
+  background: #ffffff;
+  padding: 6px;
 }
 
 h1,
