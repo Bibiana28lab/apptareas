@@ -28,6 +28,7 @@ const starterData = {
       employeeId: "emp-3",
       status: "pendiente",
       priority: "Alta",
+      points: 50,
       penaltyPerLateDay: 1,
       due: todayPlus(1),
       notes: "Confirmar cantidades y proveedor antes de aprobar la compra.",
@@ -40,6 +41,7 @@ const starterData = {
       employeeId: "emp-2",
       status: "en-curso",
       priority: "Media",
+      points: 30,
       penaltyPerLateDay: 1,
       due: todayPlus(3),
       notes: "Llevar herramientas, validar acceso y cargar evidencia al terminar.",
@@ -52,6 +54,7 @@ const starterData = {
       employeeId: "emp-1",
       status: "asignado",
       priority: "Baja",
+      points: 20,
       penaltyPerLateDay: 1,
       due: todayPlus(5),
       notes: "Registrar respuesta y proxima accion.",
@@ -98,16 +101,22 @@ function loadState() {
 }
 
 function normalizeState(data) {
+  const priorityPoints = {
+    Alta: Number(data.settings?.priorityPoints?.Alta ?? data.priorityPoints?.Alta ?? 50),
+    Media: Number(data.settings?.priorityPoints?.Media ?? data.priorityPoints?.Media ?? 30),
+    Baja: Number(data.settings?.priorityPoints?.Baja ?? data.priorityPoints?.Baja ?? 20),
+  };
+
   return {
     settings: {
-      priorityPoints: {
-        Alta: Number(data.settings?.priorityPoints?.Alta ?? data.priorityPoints?.Alta ?? 50),
-        Media: Number(data.settings?.priorityPoints?.Media ?? data.priorityPoints?.Media ?? 30),
-        Baja: Number(data.settings?.priorityPoints?.Baja ?? data.priorityPoints?.Baja ?? 20),
-      },
+      priorityPoints,
     },
     employees: data.employees || [],
-    tasks: data.tasks || [],
+    tasks: (data.tasks || []).map((task) => ({
+      ...task,
+      points: Number(task.points ?? priorityPoints[task.priority] ?? 0),
+      penaltyPerLateDay: Number(task.penaltyPerLateDay ?? 1),
+    })),
   };
 }
 
@@ -280,6 +289,7 @@ function openTaskDialog(taskId = null) {
   document.querySelector("#taskEmployee").value = task?.employeeId || state.employees[0]?.id || "";
   document.querySelector("#taskStatus").value = task?.status || "pendiente";
   document.querySelector("#taskPriority").value = task?.priority || "Media";
+  document.querySelector("#taskPoints").value = task?.points ?? getPriorityPoints(task?.priority || "Media");
   document.querySelector("#taskPenalty").value = task?.penaltyPerLateDay ?? 1;
   document.querySelector("#taskDue").value = task?.due || "";
   document.querySelector("#taskNotes").value = task?.notes || "";
@@ -301,6 +311,7 @@ function saveTaskFromDialog(event) {
     employeeId: document.querySelector("#taskEmployee").value,
     status: document.querySelector("#taskStatus").value,
     priority: document.querySelector("#taskPriority").value,
+    points: Number(document.querySelector("#taskPoints").value) || 0,
     penaltyPerLateDay: Number(document.querySelector("#taskPenalty").value) || 0,
     due: document.querySelector("#taskDue").value,
     notes: document.querySelector("#taskNotes").value.trim(),
@@ -332,6 +343,7 @@ function addQuickTask(event) {
     employeeId: document.querySelector("#quickEmployee").value,
     status: "pendiente",
     priority: document.querySelector("#quickPriority").value,
+    points: getPriorityPoints(document.querySelector("#quickPriority").value),
     penaltyPerLateDay: 1,
     due: document.querySelector("#quickDue").value,
     notes: "",
@@ -355,8 +367,15 @@ function saveSettings(event) {
 
 function updateTaskPointsPreview() {
   const priority = document.querySelector("#taskPriority").value || "Media";
-  const points = getPriorityPoints(priority);
-  document.querySelector("#taskPointsPreview").textContent = `Puntos por prioridad: ${points}`;
+  const configuredPoints = getPriorityPoints(priority);
+  const taskId = document.querySelector("#taskId").value;
+  const task = state.tasks.find((item) => item.id === taskId);
+
+  if (!task) {
+    document.querySelector("#taskPoints").value = configuredPoints;
+  }
+
+  document.querySelector("#taskPointsPreview").textContent = `Puntaje sugerido por prioridad: ${configuredPoints}`;
 }
 
 function saveEmployee(event) {
@@ -420,7 +439,7 @@ function getLateDays(task) {
 }
 
 function getTaskPoints(task) {
-  const base = getPriorityPoints(task.priority);
+  const base = Number(task.points ?? getPriorityPoints(task.priority));
   const penalty = Number(task.penaltyPerLateDay ?? 1);
   const current = Math.max(0, base - getLateDays(task) * penalty);
   return { base, current };

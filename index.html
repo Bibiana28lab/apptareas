@@ -157,11 +157,17 @@
             <input id="taskDue" type="date" />
           </label>
         </div>
-        <p class="points-preview" id="taskPointsPreview">Puntos por prioridad: 30</p>
-        <label>
-          Descuento por dia de atraso
-          <input id="taskPenalty" type="number" min="0" step="1" value="1" />
-        </label>
+        <div class="form-grid">
+          <label>
+            Puntos de esta tarea
+            <input id="taskPoints" type="number" min="0" step="1" value="30" />
+          </label>
+          <label>
+            Descuento por dia de atraso
+            <input id="taskPenalty" type="number" min="0" step="1" value="1" />
+          </label>
+        </div>
+        <p class="points-preview" id="taskPointsPreview">Puntaje sugerido por prioridad: 30</p>
         <label>
           Detalle
           <textarea id="taskNotes" rows="4"></textarea>
