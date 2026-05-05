@@ -8,6 +8,13 @@ const statuses = [
 ];
 
 const starterData = {
+  settings: {
+    priorityPoints: {
+      Alta: 50,
+      Media: 30,
+      Baja: 20,
+    },
+  },
   employees: [
     { id: "emp-1", name: "Ana Torres", role: "Coordinacion" },
     { id: "emp-2", name: "Carlos Ruiz", role: "Tecnico" },
@@ -21,7 +28,6 @@ const starterData = {
       employeeId: "emp-3",
       status: "pendiente",
       priority: "Alta",
-      points: 10,
       penaltyPerLateDay: 1,
       due: todayPlus(1),
       notes: "Confirmar cantidades y proveedor antes de aprobar la compra.",
@@ -34,7 +40,6 @@ const starterData = {
       employeeId: "emp-2",
       status: "en-curso",
       priority: "Media",
-      points: 15,
       penaltyPerLateDay: 1,
       due: todayPlus(3),
       notes: "Llevar herramientas, validar acceso y cargar evidencia al terminar.",
@@ -47,7 +52,6 @@ const starterData = {
       employeeId: "emp-1",
       status: "asignado",
       priority: "Baja",
-      points: 8,
       penaltyPerLateDay: 1,
       due: todayPlus(5),
       notes: "Registrar respuesta y proxima accion.",
@@ -72,6 +76,8 @@ document.querySelector("#quickTaskForm").addEventListener("submit", addQuickTask
 document.querySelector("#searchInput").addEventListener("input", render);
 document.querySelector("#employeeFilter").addEventListener("change", render);
 document.querySelector("#priorityFilter").addEventListener("change", render);
+document.querySelector("#settingsForm").addEventListener("submit", saveSettings);
+document.querySelector("#taskPriority").addEventListener("change", updateTaskPointsPreview);
 document.querySelector("#addEmployeeBtn").addEventListener("click", () => employeeDialog.showModal());
 document.querySelector("#closeEmployeeBtn").addEventListener("click", () => employeeDialog.close());
 document.querySelector("#cancelEmployeeBtn").addEventListener("click", () => employeeDialog.close());
@@ -85,10 +91,24 @@ function loadState() {
   if (!saved) return structuredClone(starterData);
 
   try {
-    return JSON.parse(saved);
+    return normalizeState(JSON.parse(saved));
   } catch {
     return structuredClone(starterData);
   }
+}
+
+function normalizeState(data) {
+  return {
+    settings: {
+      priorityPoints: {
+        Alta: Number(data.settings?.priorityPoints?.Alta ?? data.priorityPoints?.Alta ?? 50),
+        Media: Number(data.settings?.priorityPoints?.Media ?? data.priorityPoints?.Media ?? 30),
+        Baja: Number(data.settings?.priorityPoints?.Baja ?? data.priorityPoints?.Baja ?? 20),
+      },
+    },
+    employees: data.employees || [],
+    tasks: data.tasks || [],
+  };
 }
 
 function persist() {
@@ -97,9 +117,16 @@ function persist() {
 
 function render() {
   renderSelectors();
+  renderSettings();
   renderEmployees();
   renderBoard();
   renderStats();
+}
+
+function renderSettings() {
+  document.querySelector("#pointsAlta").value = state.settings.priorityPoints.Alta;
+  document.querySelector("#pointsMedia").value = state.settings.priorityPoints.Media;
+  document.querySelector("#pointsBaja").value = state.settings.priorityPoints.Baja;
 }
 
 function renderSelectors() {
@@ -253,10 +280,10 @@ function openTaskDialog(taskId = null) {
   document.querySelector("#taskEmployee").value = task?.employeeId || state.employees[0]?.id || "";
   document.querySelector("#taskStatus").value = task?.status || "pendiente";
   document.querySelector("#taskPriority").value = task?.priority || "Media";
-  document.querySelector("#taskPoints").value = task?.points ?? 10;
   document.querySelector("#taskPenalty").value = task?.penaltyPerLateDay ?? 1;
   document.querySelector("#taskDue").value = task?.due || "";
   document.querySelector("#taskNotes").value = task?.notes || "";
+  updateTaskPointsPreview();
   taskDialog.showModal();
 }
 
@@ -274,7 +301,6 @@ function saveTaskFromDialog(event) {
     employeeId: document.querySelector("#taskEmployee").value,
     status: document.querySelector("#taskStatus").value,
     priority: document.querySelector("#taskPriority").value,
-    points: Number(document.querySelector("#taskPoints").value) || 0,
     penaltyPerLateDay: Number(document.querySelector("#taskPenalty").value) || 0,
     due: document.querySelector("#taskDue").value,
     notes: document.querySelector("#taskNotes").value.trim(),
@@ -306,7 +332,6 @@ function addQuickTask(event) {
     employeeId: document.querySelector("#quickEmployee").value,
     status: "pendiente",
     priority: document.querySelector("#quickPriority").value,
-    points: Number(document.querySelector("#quickPoints").value) || 0,
     penaltyPerLateDay: 1,
     due: document.querySelector("#quickDue").value,
     notes: "",
@@ -315,6 +340,23 @@ function addQuickTask(event) {
   event.target.reset();
   persist();
   render();
+}
+
+function saveSettings(event) {
+  event.preventDefault();
+  state.settings.priorityPoints = {
+    Alta: Number(document.querySelector("#pointsAlta").value) || 0,
+    Media: Number(document.querySelector("#pointsMedia").value) || 0,
+    Baja: Number(document.querySelector("#pointsBaja").value) || 0,
+  };
+  persist();
+  render();
+}
+
+function updateTaskPointsPreview() {
+  const priority = document.querySelector("#taskPriority").value || "Media";
+  const points = getPriorityPoints(priority);
+  document.querySelector("#taskPointsPreview").textContent = `Puntos por prioridad: ${points}`;
 }
 
 function saveEmployee(event) {
@@ -378,10 +420,14 @@ function getLateDays(task) {
 }
 
 function getTaskPoints(task) {
-  const base = Number(task.points ?? 10);
+  const base = getPriorityPoints(task.priority);
   const penalty = Number(task.penaltyPerLateDay ?? 1);
   const current = Math.max(0, base - getLateDays(task) * penalty);
   return { base, current };
+}
+
+function getPriorityPoints(priority) {
+  return Number(state.settings?.priorityPoints?.[priority] ?? 0);
 }
 
 function todayPlus(days) {

@@ -1,16 +1,16 @@
 :root {
   color-scheme: light;
-  --bg: #eef1f4;
+  --bg: #eaf2fb;
   --surface: #ffffff;
   --surface-2: #f7f9fb;
-  --ink: #1d252d;
-  --muted: #65717d;
-  --line: #d9e0e7;
-  --accent: #147c72;
-  --accent-dark: #0e5f58;
+  --ink: #10243a;
+  --muted: #60748c;
+  --line: #c9d9eb;
+  --accent: #1d6fb8;
+  --accent-dark: #14528a;
   --danger: #b93232;
   --warning: #b26a13;
-  --blue: #2563a8;
+  --blue: #1d6fb8;
   --shadow: 0 14px 35px rgba(29, 37, 45, 0.1);
 }
 
@@ -45,7 +45,7 @@ button {
 }
 
 .sidebar {
-  background: #18232d;
+  background: #0d2742;
   color: #f7fbff;
   padding: 22px;
   overflow: auto;
@@ -166,7 +166,7 @@ textarea {
 .sidebar input,
 .sidebar select {
   border-color: rgba(255, 255, 255, 0.16);
-  background: #24313c;
+  background: #143759;
   color: #fff;
 }
 
@@ -243,8 +243,18 @@ textarea {
 
 .quick-entry form {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) 180px 130px 110px 150px auto;
+  grid-template-columns: minmax(220px, 1fr) 180px 130px 150px auto;
   gap: 10px;
+}
+
+.settings-form button {
+  width: 100%;
+  min-height: 40px;
+  margin-top: 12px;
+  border-radius: 7px;
+  background: #58a6e8;
+  color: #08233d;
+  font-weight: 800;
 }
 
 .board {
@@ -259,6 +269,22 @@ textarea {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface-2);
+}
+
+.column[data-status="pendiente"] {
+  border-top: 5px solid #d13f3f;
+}
+
+.column[data-status="asignado"] {
+  border-top: 5px solid #e6b422;
+}
+
+.column[data-status="en-curso"] {
+  border-top: 5px solid #f28c28;
+}
+
+.column[data-status="finalizado"] {
+  border-top: 5px solid #248c52;
 }
 
 .column-header {
@@ -360,6 +386,16 @@ textarea {
 .points.lost {
   background: #fff0f0;
   color: var(--danger);
+}
+
+.points-preview {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 7px;
+  background: #e9f4ff;
+  color: var(--accent-dark);
+  font-size: 13px;
+  font-weight: 800;
 }
 
 .employee-list {

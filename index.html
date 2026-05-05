@@ -67,6 +67,25 @@
             </select>
           </label>
         </section>
+
+        <section class="panel">
+          <h2>Configuracion</h2>
+          <form id="settingsForm" class="settings-form">
+            <label>
+              Puntos prioridad alta
+              <input id="pointsAlta" type="number" min="0" step="1" />
+            </label>
+            <label>
+              Puntos prioridad media
+              <input id="pointsMedia" type="number" min="0" step="1" />
+            </label>
+            <label>
+              Puntos prioridad baja
+              <input id="pointsBaja" type="number" min="0" step="1" />
+            </label>
+            <button type="submit">Guardar puntajes</button>
+          </form>
+        </section>
       </aside>
 
       <main class="workspace">
@@ -90,7 +109,6 @@
               <option>Alta</option>
               <option>Baja</option>
             </select>
-            <input id="quickPoints" type="number" min="0" step="1" value="10" title="Puntos" />
             <input id="quickDue" type="date" />
             <button type="submit">Agregar</button>
           </form>
@@ -139,16 +157,11 @@
             <input id="taskDue" type="date" />
           </label>
         </div>
-        <div class="form-grid">
-          <label>
-            Puntos iniciales
-            <input id="taskPoints" type="number" min="0" step="1" value="10" />
-          </label>
-          <label>
-            Descuento por dia de atraso
-            <input id="taskPenalty" type="number" min="0" step="1" value="1" />
-          </label>
-        </div>
+        <p class="points-preview" id="taskPointsPreview">Puntos por prioridad: 30</p>
+        <label>
+          Descuento por dia de atraso
+          <input id="taskPenalty" type="number" min="0" step="1" value="1" />
+        </label>
         <label>
           Detalle
           <textarea id="taskNotes" rows="4"></textarea>
