@@ -243,7 +243,7 @@ textarea {
 
 .quick-entry form {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) 180px 130px 150px auto;
+  grid-template-columns: minmax(220px, 1fr) 180px 130px 110px 150px auto;
   gap: 10px;
 }
 
@@ -350,6 +350,16 @@ textarea {
 .late {
   background: #fff0e8;
   color: #a24211;
+}
+
+.points {
+  background: #eaf7f4;
+  color: var(--accent-dark);
+}
+
+.points.lost {
+  background: #fff0f0;
+  color: var(--danger);
 }
 
 .employee-list {

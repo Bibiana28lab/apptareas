@@ -90,6 +90,7 @@
               <option>Alta</option>
               <option>Baja</option>
             </select>
+            <input id="quickPoints" type="number" min="0" step="1" value="10" title="Puntos" />
             <input id="quickDue" type="date" />
             <button type="submit">Agregar</button>
           </form>
@@ -136,6 +137,16 @@
           <label>
             Vence
             <input id="taskDue" type="date" />
+          </label>
+        </div>
+        <div class="form-grid">
+          <label>
+            Puntos iniciales
+            <input id="taskPoints" type="number" min="0" step="1" value="10" />
+          </label>
+          <label>
+            Descuento por dia de atraso
+            <input id="taskPenalty" type="number" min="0" step="1" value="1" />
           </label>
         </div>
         <label>

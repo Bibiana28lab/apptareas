@@ -21,6 +21,8 @@ const starterData = {
       employeeId: "emp-3",
       status: "pendiente",
       priority: "Alta",
+      points: 10,
+      penaltyPerLateDay: 1,
       due: todayPlus(1),
       notes: "Confirmar cantidades y proveedor antes de aprobar la compra.",
       createdAt: new Date().toISOString(),
@@ -32,6 +34,8 @@ const starterData = {
       employeeId: "emp-2",
       status: "en-curso",
       priority: "Media",
+      points: 15,
+      penaltyPerLateDay: 1,
       due: todayPlus(3),
       notes: "Llevar herramientas, validar acceso y cargar evidencia al terminar.",
       createdAt: new Date().toISOString(),
@@ -43,6 +47,8 @@ const starterData = {
       employeeId: "emp-1",
       status: "asignado",
       priority: "Baja",
+      points: 8,
+      penaltyPerLateDay: 1,
       due: todayPlus(5),
       notes: "Registrar respuesta y proxima accion.",
       createdAt: new Date().toISOString(),
@@ -198,6 +204,7 @@ function renderBoard() {
 function renderTaskCard(task) {
   const employee = state.employees.find((person) => person.id === task.employeeId);
   const late = isLate(task);
+  const points = getTaskPoints(task);
   return `
     <div class="task-card priority-${task.priority}" draggable="true" data-id="${task.id}">
       <h4>${escapeHtml(task.title)}</h4>
@@ -205,6 +212,7 @@ function renderTaskCard(task) {
       <div class="task-meta">
         <span class="pill">${escapeHtml(employee?.name || "Sin responsable")}</span>
         <span class="pill">${task.priority}</span>
+        <span class="pill points ${points.current < points.base ? "lost" : ""}">${points.current}/${points.base} pts</span>
         ${task.due ? `<span class="pill ${late ? "late" : ""}">${formatDate(task.due)}</span>` : ""}
       </div>
     </div>
@@ -245,6 +253,8 @@ function openTaskDialog(taskId = null) {
   document.querySelector("#taskEmployee").value = task?.employeeId || state.employees[0]?.id || "";
   document.querySelector("#taskStatus").value = task?.status || "pendiente";
   document.querySelector("#taskPriority").value = task?.priority || "Media";
+  document.querySelector("#taskPoints").value = task?.points ?? 10;
+  document.querySelector("#taskPenalty").value = task?.penaltyPerLateDay ?? 1;
   document.querySelector("#taskDue").value = task?.due || "";
   document.querySelector("#taskNotes").value = task?.notes || "";
   taskDialog.showModal();
@@ -264,6 +274,8 @@ function saveTaskFromDialog(event) {
     employeeId: document.querySelector("#taskEmployee").value,
     status: document.querySelector("#taskStatus").value,
     priority: document.querySelector("#taskPriority").value,
+    points: Number(document.querySelector("#taskPoints").value) || 0,
+    penaltyPerLateDay: Number(document.querySelector("#taskPenalty").value) || 0,
     due: document.querySelector("#taskDue").value,
     notes: document.querySelector("#taskNotes").value.trim(),
     createdAt: state.tasks.find((item) => item.id === id)?.createdAt || new Date().toISOString(),
@@ -294,6 +306,8 @@ function addQuickTask(event) {
     employeeId: document.querySelector("#quickEmployee").value,
     status: "pendiente",
     priority: document.querySelector("#quickPriority").value,
+    points: Number(document.querySelector("#quickPoints").value) || 0,
+    penaltyPerLateDay: 1,
     due: document.querySelector("#quickDue").value,
     notes: "",
     createdAt: new Date().toISOString(),
@@ -333,6 +347,9 @@ function exportData() {
       responsable: employee?.name || "",
       estado: status?.label || task.status,
       prioridad: task.priority,
+      puntos_iniciales: getTaskPoints(task).base,
+      puntos_actuales: getTaskPoints(task).current,
+      dias_de_atraso: getLateDays(task),
       vence: task.due,
       detalle: task.notes,
     };
@@ -348,11 +365,23 @@ function exportData() {
 }
 
 function isLate(task) {
-  if (!task.due || task.status === "finalizado") return false;
+  return getLateDays(task) > 0;
+}
+
+function getLateDays(task) {
+  if (!task.due || task.status === "finalizado") return 0;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const due = new Date(`${task.due}T00:00:00`);
-  return due < today;
+  const diff = today.getTime() - due.getTime();
+  return Math.max(0, Math.floor(diff / 86400000));
+}
+
+function getTaskPoints(task) {
+  const base = Number(task.points ?? 10);
+  const penalty = Number(task.penaltyPerLateDay ?? 1);
+  const current = Math.max(0, base - getLateDays(task) * penalty);
+  return { base, current };
 }
 
 function todayPlus(days) {
