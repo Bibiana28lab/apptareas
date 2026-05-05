@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Control de trabajos</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <img class="brand-logo" src="assets/vaixell-media-logo.png" alt="Vaixell Media" />
+          <div>
+            <h1>Control de trabajos</h1>
+            <p>Tablero operativo</p>
+          </div>
+        </div>
+
+        <section class="panel compact">
+          <h2>Resumen</h2>
+          <div class="stats-grid">
+            <div>
+              <span id="statTotal">0</span>
+              <small>Total</small>
+            </div>
+            <div>
+              <span id="statProgress">0</span>
+              <small>En curso</small>
+            </div>
+            <div>
+              <span id="statLate">0</span>
+              <small>Vencidas</small>
+            </div>
+            <div>
+              <span id="statDone">0</span>
+              <small>Hechas</small>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-title">
+            <h2>Equipo</h2>
+            <button class="icon-button" id="addEmployeeBtn" title="Agregar empleado">+</button>
+          </div>
+          <div class="employee-list" id="employeeList"></div>
+        </section>
+
+        <section class="panel">
+          <h2>Filtros</h2>
+          <label>
+            Buscar
+            <input id="searchInput" type="search" placeholder="Cliente, tarea, detalle..." />
+          </label>
+          <label>
+            Responsable
+            <select id="employeeFilter"></select>
+          </label>
+          <label>
+            Prioridad
+            <select id="priorityFilter">
+              <option value="all">Todas</option>
+              <option value="Alta">Alta</option>
+              <option value="Media">Media</option>
+              <option value="Baja">Baja</option>
+            </select>
+          </label>
+        </section>
+
+        <section class="panel">
+          <h2>Configuracion</h2>
+          <form id="settingsForm" class="settings-form">
+            <label>
+              Puntos prioridad alta
+              <input id="pointsAlta" type="number" min="0" step="1" />
+            </label>
+            <label>
+              Puntos prioridad media
+              <input id="pointsMedia" type="number" min="0" step="1" />
+            </label>
+            <label>
+              Puntos prioridad baja
+              <input id="pointsBaja" type="number" min="0" step="1" />
+            </label>
+            <button type="submit">Guardar puntajes</button>
+          </form>
+        </section>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Gestión diaria</p>
+            <h2>Trabajos asignados</h2>
+          </div>
+          <div class="actions">
+            <button class="secondary" id="exportBtn">Exportar</button>
+            <button class="primary" id="newTaskBtn">Nuevo trabajo</button>
+          </div>
+        </header>
+
+        <section class="quick-entry">
+          <form id="quickTaskForm">
+            <input id="quickTitle" required placeholder="Trabajo a realizar" />
+            <select id="quickEmployee"></select>
+            <select id="quickPriority">
+              <option>Media</option>
+              <option>Alta</option>
+              <option>Baja</option>
+            </select>
+            <input id="quickDue" type="date" />
+            <button type="submit">Agregar</button>
+          </form>
+        </section>
+
+        <section class="board" id="board"></section>
+      </main>
+    </div>
+
+    <dialog id="taskDialog">
+      <form id="taskForm" method="dialog">
+        <div class="modal-head">
+          <h2 id="dialogTitle">Nuevo trabajo</h2>
+          <button type="button" class="icon-button" id="closeDialogBtn" title="Cerrar">x</button>
+        </div>
+        <input type="hidden" id="taskId" />
+        <label>
+          Trabajo
+          <input id="taskTitle" required maxlength="90" />
+        </label>
+        <label>
+          Cliente / área
+          <input id="taskClient" maxlength="70" />
+        </label>
+        <div class="form-grid">
+          <label>
+            Responsable
+            <select id="taskEmployee"></select>
+          </label>
+          <label>
+            Estado
+            <select id="taskStatus"></select>
+          </label>
+        </div>
+        <div class="form-grid">
+          <label>
+            Prioridad
+            <select id="taskPriority">
+              <option>Alta</option>
+              <option>Media</option>
+              <option>Baja</option>
+            </select>
+          </label>
+          <label>
+            Vence
+            <input id="taskDue" type="date" />
+          </label>
+        </div>
+        <p class="points-preview" id="taskPointsPreview">Puntos por prioridad: 30</p>
+        <label>
+          Descuento por dia de atraso
+          <input id="taskPenalty" type="number" min="0" step="1" value="1" />
+        </label>
+        <label>
+          Detalle
+          <textarea id="taskNotes" rows="4"></textarea>
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="danger" id="deleteTaskBtn">Eliminar</button>
+          <span></span>
+          <button type="button" class="secondary" id="cancelDialogBtn">Cancelar</button>
+          <button class="primary" id="saveTaskBtn">Guardar</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="employeeDialog">
+      <form id="employeeForm" method="dialog">
+        <div class="modal-head">
+          <h2>Nuevo empleado</h2>
+          <button type="button" class="icon-button" id="closeEmployeeBtn" title="Cerrar">x</button>
+        </div>
+        <label>
+          Nombre
+          <input id="employeeName" required maxlength="40" />
+        </label>
+        <label>
+          Rol
+          <input id="employeeRole" maxlength="50" placeholder="Técnico, administración..." />
+        </label>
+        <div class="modal-actions two">
+          <button type="button" class="secondary" id="cancelEmployeeBtn">Cancelar</button>
+          <button class="primary">Guardar</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="app.js"></script>
+  </body>
+</html>
