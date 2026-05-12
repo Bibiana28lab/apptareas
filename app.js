@@ -121,6 +121,7 @@ function normalizeState(data) {
       ...task,
       points: Number(task.points ?? priorityPoints[task.priority] ?? 0),
       penaltyPerLateDay: Number(task.penaltyPerLateDay ?? 1),
+      completedAt: task.completedAt || "",
     })),
   };
 }
@@ -319,18 +320,21 @@ function closeTaskDialog() {
 function saveTaskFromDialog(event) {
   event.preventDefault();
   const id = document.querySelector("#taskId").value || crypto.randomUUID();
+  const existingTask = state.tasks.find((item) => item.id === id);
+  const nextStatus = document.querySelector("#taskStatus").value;
   const task = {
     id,
     title: document.querySelector("#taskTitle").value.trim(),
     client: document.querySelector("#taskClient").value.trim(),
     employeeId: document.querySelector("#taskEmployee").value,
-    status: document.querySelector("#taskStatus").value,
+    status: nextStatus,
     priority: document.querySelector("#taskPriority").value,
     points: Number(document.querySelector("#taskPoints").value) || 0,
     penaltyPerLateDay: Number(document.querySelector("#taskPenalty").value) || 0,
     due: document.querySelector("#taskDue").value,
     notes: document.querySelector("#taskNotes").value.trim(),
-    createdAt: state.tasks.find((item) => item.id === id)?.createdAt || new Date().toISOString(),
+    createdAt: existingTask?.createdAt || new Date().toISOString(),
+    completedAt: resolveCompletedAt(existingTask, nextStatus),
   };
 
   state.tasks = state.tasks.some((item) => item.id === id)
@@ -364,6 +368,7 @@ function addQuickTask(event) {
     due: document.querySelector("#quickDue").value,
     notes: "",
     createdAt: new Date().toISOString(),
+    completedAt: "",
   });
   event.target.reset();
   persist();
@@ -443,7 +448,15 @@ function confirmDeleteEmployee(event) {
 
 function moveTask(taskId, status) {
   if (!taskId) return;
-  state.tasks = state.tasks.map((task) => (task.id === taskId ? { ...task, status } : task));
+  state.tasks = state.tasks.map((task) =>
+    task.id === taskId
+      ? {
+          ...task,
+          status,
+          completedAt: resolveCompletedAt(task, status),
+        }
+      : task
+  );
   persist();
   render();
 }
@@ -476,15 +489,15 @@ function exportData() {
 }
 
 function isLate(task) {
-  return getLateDays(task) > 0;
+  return task.status !== "finalizado" && getLateDays(task) > 0;
 }
 
 function getLateDays(task) {
-  if (!task.due || task.status === "finalizado") return 0;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  if (!task.due) return 0;
+  const referenceDate = getReferenceDate(task);
+  if (!referenceDate) return 0;
   const due = new Date(`${task.due}T00:00:00`);
-  const diff = today.getTime() - due.getTime();
+  const diff = referenceDate.getTime() - due.getTime();
   return Math.max(0, Math.floor(diff / 86400000));
 }
 
@@ -497,6 +510,23 @@ function getTaskPoints(task) {
 
 function getPriorityPoints(priority) {
   return Number(state.settings?.priorityPoints?.[priority] ?? 0);
+}
+
+function resolveCompletedAt(task, nextStatus) {
+  if (nextStatus === "finalizado") {
+    return task?.completedAt || new Date().toISOString();
+  }
+
+  return "";
+}
+
+function getReferenceDate(task) {
+  const referenceValue = task.status === "finalizado" ? task.completedAt : new Date().toISOString();
+  if (!referenceValue) return null;
+
+  const date = new Date(referenceValue);
+  date.setHours(0, 0, 0, 0);
+  return Number.isNaN(date.getTime()) ? null : date;
 }
 
 function todayPlus(days) {
