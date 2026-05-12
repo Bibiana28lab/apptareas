@@ -202,6 +202,22 @@
       </form>
     </dialog>
 
+    <dialog id="confirmDialog">
+      <form id="confirmForm" method="dialog">
+        <div class="modal-head">
+          <h2>Eliminar empleado</h2>
+          <button type="button" class="icon-button" id="closeConfirmBtn" title="Cerrar">x</button>
+        </div>
+        <p class="confirm-copy" id="confirmMessage">
+          Esta accion dejara las tareas asignadas sin responsable.
+        </p>
+        <div class="modal-actions two">
+          <button type="button" class="secondary" id="cancelConfirmBtn">Cancelar</button>
+          <button class="danger" id="confirmDeleteBtn">Eliminar</button>
+        </div>
+      </form>
+    </dialog>
+
     <script src="app.js"></script>
   </body>
 </html>

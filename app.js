@@ -69,6 +69,8 @@ let draggedTaskId = null;
 const board = document.querySelector("#board");
 const taskDialog = document.querySelector("#taskDialog");
 const employeeDialog = document.querySelector("#employeeDialog");
+const confirmDialog = document.querySelector("#confirmDialog");
+let employeePendingDeleteId = null;
 
 document.querySelector("#newTaskBtn").addEventListener("click", () => openTaskDialog());
 document.querySelector("#closeDialogBtn").addEventListener("click", closeTaskDialog);
@@ -86,6 +88,9 @@ document.querySelector("#closeEmployeeBtn").addEventListener("click", () => empl
 document.querySelector("#cancelEmployeeBtn").addEventListener("click", () => employeeDialog.close());
 document.querySelector("#employeeForm").addEventListener("submit", saveEmployee);
 document.querySelector("#exportBtn").addEventListener("click", exportData);
+document.querySelector("#closeConfirmBtn").addEventListener("click", closeConfirmDialog);
+document.querySelector("#cancelConfirmBtn").addEventListener("click", closeConfirmDialog);
+document.querySelector("#confirmForm").addEventListener("submit", confirmDeleteEmployee);
 
 render();
 
@@ -153,9 +158,10 @@ function renderSelectors() {
   document.querySelector("#quickEmployee").innerHTML = state.employees
     .map((employee) => `<option value="${employee.id}">${escapeHtml(employee.name)}</option>`)
     .join("");
-  document.querySelector("#taskEmployee").innerHTML = state.employees
-    .map((employee) => `<option value="${employee.id}">${escapeHtml(employee.name)}</option>`)
-    .join("");
+  document.querySelector("#taskEmployee").innerHTML = [
+    `<option value="">Sin responsable</option>`,
+    ...state.employees.map((employee) => `<option value="${employee.id}">${escapeHtml(employee.name)}</option>`),
+  ].join("");
   document.querySelector("#taskStatus").innerHTML = statuses
     .map((status) => `<option value="${status.id}">${status.label}</option>`)
     .join("");
@@ -166,12 +172,14 @@ function renderSelectors() {
   document.querySelector("#quickEmployee").value = state.employees.some((employee) => employee.id === selectedQuickEmployee)
     ? selectedQuickEmployee
     : state.employees[0]?.id || "";
-  document.querySelector("#taskEmployee").value = state.employees.some((employee) => employee.id === selectedTaskEmployee)
-    ? selectedTaskEmployee
-    : state.employees[0]?.id || "";
+  document.querySelector("#taskEmployee").value =
+    selectedTaskEmployee === "" || state.employees.some((employee) => employee.id === selectedTaskEmployee)
+      ? selectedTaskEmployee
+      : "";
   document.querySelector("#taskStatus").value = statuses.some((status) => status.id === selectedTaskStatus)
     ? selectedTaskStatus
     : "pendiente";
+  document.querySelector("#quickTaskForm button").disabled = state.employees.length === 0;
 }
 
 function renderEmployees() {
@@ -182,15 +190,22 @@ function renderEmployees() {
       ).length;
       return `
         <div class="employee-row">
-          <div class="avatar">${initials(employee.name)}</div>
-          <div>
-            <strong>${escapeHtml(employee.name)}</strong>
-            <small>${escapeHtml(employee.role || "Sin rol")} · ${activeCount} activos</small>
+          <div class="employee-main">
+            <div class="avatar">${initials(employee.name)}</div>
+            <div>
+              <strong>${escapeHtml(employee.name)}</strong>
+              <small>${escapeHtml(employee.role || "Sin rol")} · ${activeCount} activos</small>
+            </div>
           </div>
+          <button class="icon-button delete-employee-btn" data-id="${employee.id}" title="Eliminar empleado">x</button>
         </div>
       `;
     })
     .join("");
+
+  document.querySelectorAll(".delete-employee-btn").forEach((button) => {
+    button.addEventListener("click", () => openDeleteEmployeeDialog(button.dataset.id));
+  });
 }
 
 function renderBoard() {
@@ -286,7 +301,7 @@ function openTaskDialog(taskId = null) {
   document.querySelector("#taskId").value = task?.id || "";
   document.querySelector("#taskTitle").value = task?.title || "";
   document.querySelector("#taskClient").value = task?.client || "";
-  document.querySelector("#taskEmployee").value = task?.employeeId || state.employees[0]?.id || "";
+  document.querySelector("#taskEmployee").value = task?.employeeId || "";
   document.querySelector("#taskStatus").value = task?.status || "pendiente";
   document.querySelector("#taskPriority").value = task?.priority || "Media";
   document.querySelector("#taskPoints").value = task?.points ?? getPriorityPoints(task?.priority || "Media");
@@ -336,6 +351,7 @@ function deleteCurrentTask() {
 
 function addQuickTask(event) {
   event.preventDefault();
+  if (state.employees.length === 0) return;
   state.tasks.unshift({
     id: crypto.randomUUID(),
     title: document.querySelector("#quickTitle").value.trim(),
@@ -388,6 +404,40 @@ function saveEmployee(event) {
   event.target.reset();
   employeeDialog.close();
   persist();
+  render();
+}
+
+function openDeleteEmployeeDialog(employeeId) {
+  const employee = state.employees.find((item) => item.id === employeeId);
+  if (!employee) return;
+
+  employeePendingDeleteId = employeeId;
+  const activeCount = state.tasks.filter(
+    (task) => task.employeeId === employee.id && task.status !== "finalizado"
+  ).length;
+
+  document.querySelector("#confirmMessage").textContent =
+    activeCount > 0
+      ? `${employee.name} tiene ${activeCount} tarea${activeCount === 1 ? "" : "s"} activa${activeCount === 1 ? "" : "s"}. Si lo eliminas, esas tareas quedaran sin responsable.`
+      : `Se eliminara a ${employee.name} del equipo.`;
+  confirmDialog.showModal();
+}
+
+function closeConfirmDialog() {
+  employeePendingDeleteId = null;
+  confirmDialog.close();
+}
+
+function confirmDeleteEmployee(event) {
+  event.preventDefault();
+  if (!employeePendingDeleteId) return;
+
+  state.employees = state.employees.filter((employee) => employee.id !== employeePendingDeleteId);
+  state.tasks = state.tasks.map((task) =>
+    task.employeeId === employeePendingDeleteId ? { ...task, employeeId: "" } : task
+  );
+  persist();
+  closeConfirmDialog();
   render();
 }
 

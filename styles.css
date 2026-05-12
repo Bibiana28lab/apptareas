@@ -106,7 +106,8 @@ small {
 .actions,
 .modal-head,
 .task-meta,
-.employee-row {
+.employee-row,
+.employee-main {
   display: flex;
   align-items: center;
 }
@@ -409,6 +410,20 @@ textarea {
   background: rgba(255, 255, 255, 0.08);
 }
 
+.employee-main {
+  gap: 8px;
+  min-width: 0;
+}
+
+.delete-employee-btn {
+  flex: 0 0 34px;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.delete-employee-btn:hover {
+  background: rgba(255, 255, 255, 0.26);
+}
+
 .avatar {
   display: grid;
   place-items: center;
@@ -438,6 +453,12 @@ dialog::backdrop {
 
 dialog form {
   padding: 18px;
+}
+
+.confirm-copy {
+  margin-top: 10px;
+  color: var(--muted);
+  line-height: 1.45;
 }
 
 .form-grid {
